@@ -1,0 +1,16 @@
+CONTENTS
+=========
+Run the model: 
+	run_TNM.py
+
+Main TaNa+T scripts: 
+	tangled_nature.py -- main structure of the TaNa+T model
+	life_events.py -- life events in the TaNa+T
+	offspring.py -- reproduction in the TaNa+T
+	MTE_TPC_combo.py -- TRCs of reproduction, death, and mutation probabilities
+
+Other scripts: 
+	random_generator.py -- random number generator
+	TNM_constants.py -- constants used in model
+	file_management.py -- saving outputs etc
+	test_classes.py -- classes used in the TaNa+T

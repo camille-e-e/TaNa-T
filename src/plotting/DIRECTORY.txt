@@ -1,0 +1,78 @@
+Useful plotting scripts in this folder:
+
+class_plots.py:
+--------------
+PLOTS:
+	- many
+	- abundance, diversity
+	- quake frequency, surival probability vs. time and vs. quake number, etc.
+	- survival
+NPY FILES: 
+	- final_stats_{"single" or "var"}-TRC_{date}.npy
+	- others
+
+
+by_spc_plots.py:
+----------------
+PLOTS:
+	- SADs by T
+	- skewness of SADs by T
+	- quake boxplots by T
+	- survival
+	- quake frequency vs. survival
+NPY FILES:
+	- N_by_T
+	- D_by_T
+	- core_N_by_T
+	- core_D_by_T
+	- SAD_by_T
+
+final_grid_plot.py: 
+---------------
+INPUTS: 
+	- reads output files of parameter exploration
+	- loads survival npy files from class_plots output of single_TRC and var-TRC
+PLOTS: 
+	- survival, N, and D vs. a number of variables
+	- grid plots of survival, N and D (some with TRC overlain)
+	- survival of interpolated, single-TRC and var-TRC
+OUTPUTS: 
+	- predicted_survival_prob_testFeb_09D_init_60.npy: interpolated survival from grid
+
+final_ND_plots.py:
+---------------
+INPUTS:
+	- final_stats_{"single" or "var"}-TRC_{date}.npy # produced by class plots
+OUTPUTS: 
+	- final N, D vs. T for core and ecosystem as a multi-panel plot
+
+make_final_interaction_plots.py:
+------------------------------
+INPUTS:
+	- outputs of plot_interactions.py (to be run in model output folder)
+PLOTS: 
+	- mean interactions (including interquartile ranges) and fraction of different interaction types
+
+
+plot_Topt_poff_fi_etc.py:
+------------------------
+INPUTS:
+	- species_objecst_seed{seed}_{T}K.npy
+	- modelrun_seed{seed}_{T}K.npy
+OUTPUTS:
+	- Topt distribution
+	- poff,T distribution
+	- poff,T / pdeath distribution (poff,i expected in steady state)
+	- fi distribution
+	- fi + mu N distribution (mean_j Jij expected in steady state) 
+
+scatter_SAD_stats.py:
+--------------------
+INPUTS:
+	- outputs of by_spc_plots
+PLOTS: 
+	- Arrhenius plots of N(t), D(t) for ecosystem and core
+	- scatter plots of SAD skewness
+* TO DO *:
+	- make SAD plots of only cloud species
+
