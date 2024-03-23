@@ -23,22 +23,5 @@ This will copy the current versions of relevant TNM scripts and inputs to the ou
 
 CONTENTS:
 ---------
-SRC contains the package TaNa+T, which contains these scripts:
-* tangled\_nature.py: initialization and main routine of the TNM.
-* TNM\_constants.py: constants and runtime options for the TNM.
-* file\_management.py: a script to create output folders and file names depending on the date and experiment type, and print outputs every gerneration and at the end of the experiment.
-* life\_events.py: functions for birth, death, and fitness calculations.
-* offspring.py: functions for reproduction and mutations (new species formation)
-* run\_TNM.py: launch tangled\_nature
-* submit\_job.cmd: define inputs and submit run\_geoTNM to the PBS scheduler
-* \_\_init\_\_.py: makes the geoTNM folder a module
-* analysis/: contains script to analyze interactions between species after a model has completed.
-
-tests contains scripts to launch experiments:
-* set\_inpupts\_and\_launch\_TNM.sh: set inputs and launch experiment
-* submit\_template.cmd: template script which set\_inputs...sh modifies and copies to output path and submits to the scheduler
-
-plotting contains scipts to plot TaNa+T outputs
-
-notebooks: jupyter notebooks
+See README_contents.txt.
 
