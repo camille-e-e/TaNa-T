@@ -1,2 +1,2 @@
 # TaNa-T
-Temperature-dependent version of the Tangled Nature (TaNa) model.
+The TaNa+T is a temperature-dependent version of the Tangled Nature (TaNa) model.
