@@ -17,9 +17,13 @@ The complete module is called geoTNM, which is a folder located in SRC.
 
 USAGE:
 -----
-To run this module, navigate to /tests and then modify set\_inputs\_and\_launch\_TNM.sh with desired temperature, seed, and experiment.  (Other inputs, such as output path, can also be edited here.)  Then type
-        bash set\_inputs\_and\_launch\_TNM.sh
+To submit an experiment to a PBS queue, navigate to /tests and then modify launch_1by1.sh with desired temperature, seed, and experiment.  (Other inputs, such as output path, can also be edited here.)  Then type
+
+`        bash launch_1by1.sh`
+
 This will copy the current versions of relevant TNM scripts and inputs to the output directory and launch the job from there.
+
+For more detailed instructions, including instructions on how to run the model without PBS, refer to the README.txt file in `/src/`.
 
 CONTENTS:
 ---------
