@@ -36,5 +36,39 @@ CONTENTS of src:
 * submit_one_template.cmd: template script which launch_1by1.sh modifies and copies to output path and submits to the scheduler
 
 /plotting/ contains scripts to plot model outputs:
-
+* Methods *
+	- plot_methods.py
+* Single model run *
+	- single_class_analysis.py -- timeseries of single model run
+* Main plotting script for model outputs, generates secondary .npy files
+	- class_plots.py
+* Suvival *
+	- compare_survival.py -- survival vs. T for all experiments (first needed to run class_plots.py to generate .npy files used here)
+	- po-pd-ratio.py -- survival vs. ratio of poff/pdeath 
+* Abundance and diversity *
+	- final_ND_all_experiments.py -- final state of the model run
+	- get_final_stats.py -- is this used???
+* Species-specific plots (including SADs) *
+	- by_spc_plots.py -- must run this first to generate .npy files
+	- scatter_SAD_stats.py -- SADs (including scatter of SAD skewness)
+* Interactions *
+	- make_final_interaction_plot.py
+	- new_interaction_script.py
+	- plot_int_types.py -- interaction types (needed to run ... first to get .npy files)
+	- plot_interactions.py
+* Other scripts *
+	- ND_combine_datasets.py -- combine .npy files from two datasets
+	- plot_Topt_poff_fi_etc.py 
+	- TPC_comparison.py -- compare TRCs of var-TRC run over time
+	- plot_var_T_resp.py
+* Parameter Exploration *
+	- plot_1D_params.py -- survival, abundance and sp. richness for a range of all 7 model parameters
+	- poff_pdeath_multi_panel.py -- survival, abundance and sp. richness for a range of poff, pdeath, and pmut values (grids)
+	- mu_pmut_grid_plot.py -- survival, abundance and sp. richness for a range of mu, pmut, and pdeath values
+	* NOT SURE IF THE FOLLOWING SCRIPTS STILL WORK *
+	- poff_pdeath_grids.py -- survival, abundance and sp. richness for a ranch of poff and pdeath values
+	- final_grid_plot.py -- 2D plot of variation of 2 parameters
+	- p_grid_rmax.py
+	- parameter_comparison.py
+* analyze_dat_files * -- analyze .dat files produced by Rudy Arthur's C++ version of TaNa model
 
