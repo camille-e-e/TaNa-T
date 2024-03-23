@@ -28,12 +28,12 @@ verbose = True
 
 # User inputs
 temp_script = "temp_effects"
-seed = np.r_[200:800] #[1000:2000] #:13009]
+seed = np.r_[300:400] #:13009]
 T = np.r_[274:320:3] #[274:320:3] #[274:320:4] #[283:317:3] #[288:310:5] #[283:317:3] #False #288
-dates = ['Oct_11'] # ['Sep_09'] #['Jul_21'] # ['Jun_20'] # ['Mar_21','Mar_22'] #'Feb_28'
-other_file_dates = [str(dates[0][:4]) + i for i in list(np.array(np.r_[12:30],dtype=str))] # ['Jul_22','Jul_23','Jul_24','Jul_25','Jul_26','Jul_27','Jul_28','Jul_29'] #,'Jun_26','Jun_27','Jun_28','Jun_29','Jun_30','Jul_01','Jul_02'] #,'Jun_19','Jun_20'] # False or list of other dates that might be in file name. if all filenames match folder date, then can do False
+dates = ['Jun_20'] # ['Mar_21','Mar_22'] #'Feb_28'
+other_file_dates = ['Jun_21','Jun_22','Jun_23','Jun_24'] # False or list of other dates that might be in file name. if all filenames match folder date, then can do False
 experiment = 'SteadyT/' #'UnknownExperiment/' #'SteadyT/' #'SpunupT/' #'BasicTNM/' # 'SpunupT/'
-extra_folder = "/MTE-env" # "/MTE_TPC_combo" # "/Variable_Tresponse" # "/poff_is_roff" #"/poff_is_roff" #'/skew_norm_new_parameters' #/carb_truncated' #'/carb_model_branch' #'/Feb_21_copy_truncated/truncated' # slash in front only or else ''
+extra_folder = "/poff_is_roff" #'/skew_norm_new_parameters' #/carb_truncated' #'/carb_model_branch' #'/Feb_21_copy_truncated/truncated' # slash in front only or else ''
 L = 20 #20
 locat = '/home/cfebvre/camille/OUT_TNM/temp_TNM/experiments/'
 BasicTNM_locat = locat + 'BasicTNM/Jun_17/'
@@ -48,26 +48,22 @@ def find_file(date,seed,T,type="pypy"):
     # return locat+f"pypy_seed{str(seed)}{date}_{str(T)}K_TNM_L20.dat"
     #print("* * * f i n d i n g   f i l e * * * ")
     #print("looking for ",type," file")
-    date2 = date
     if type == "pypy": 
         #print("entered pypy for loop")
         file = f"{locat}{experiment}{date}{extra_folder}/pypy_seed{str(seed)}{date}_{str(T)}K_TNM_L{L}.dat"
-        #print("file: ",file)
-        #print(exists(file))
         if not exists(file):
-            print("pypy file not found on first try, checking again")
+            #print("pypy file not found on first try, checking again")
             # check other possible dates for filename if this filename wasn't found
             for i in np.r_[0:len(other_file_dates)]:
                 date2 = other_file_dates[i]
                 # print('checking ',date2,' to see if it exists...')
                 file = f"{locat}{experiment}{date}{extra_folder}/pypy_seed{str(seed)}{date2}_{str(T)}K_TNM_L{L}.dat"
                 if exists(file):
-                    print('pypy file found with new date')
+                    #print('pypy file found with new date')
                     break
-                else: 
-                    print("NO FILE FOUND: ")
-                    print(file)
-            #print("---file found---")
+                #else: 
+                #    print("NO FILE FOUND: ")
+                #    print(file)
     elif type == "div":
         #print("entered div for loop")
         file = f"{locat}{experiment}{date}{extra_folder}/diversity_seed{str(seed)}{date}_{str(T)}K_TNM_L{L}.dat"
@@ -91,22 +87,19 @@ def find_file(date,seed,T,type="pypy"):
         else: date2 = date
     else: print("Error, define file type as pypy or div")
     if exists(file):
-        #print("---File exists---: ",file)
+        #print("File exists") #: ",file)
         return file, date2
     else: print("Can't find file: ",file)
 
 # Get population and diversity time series from pypy file
 def get_pop_div(date,seed,T,type="pypy",filename=None):
-    #print("looking for ",type," file")
     if type == "basic": # find BasicTNM run files
         pypy_file = filename
-#        print('*******\nBasicTNM file:\n',pypy_file)
-#        print(exists(pypy_file))
+        print('*******\nBasicTNM file:\n',pypy_file)
+        print(exists(pypy_file))
     else:
-        #print("looking for pypy file")
         pypy_file,date2 = find_file(date,seed,T,"pypy")
-        print('************\n'+experiment+'\n',pypy_file)
-    print("file found: ",pypy_file) #"date, seed, T: ",date,seed,T)
+    print("date, seed, T: ",date,seed,T)
     populations = []
     diversities = []
     core_pops = []
@@ -139,8 +132,7 @@ def get_interaction(date,sd,temp,type="div",locat=locat):
         sd = int(div_file[seed_idx+4:seed_idx+7])
         date = div_file[seed_idx+7:seed_idx+13]
         date2 = date
-        T = 'Fals'
-        interactions = analyze_J.final_interaction(div_file,date,sd,T=T,locat=BasicTNM_locat)
+        interactions = analyze_J.final_interaction(div_file,date,sd,locat=BasicTNM_locat)
     else:
         div_file,date2 = find_file(date,sd,temp,type)
     # print("get_interactions:")
@@ -189,10 +181,10 @@ if plot_multiple:
         #try:
         gens_run,pop_temp,div_temp,core_pop,core_div = get_pop_div(0,0,False,type="basic",filename=BasicTNM_locat+sd)
         gens_this_T.append(gens_run[-1])
-        pops_this_T.append(np.mean(pop_temp[-100:]))
-        divs_this_T.append(np.mean(div_temp[-100:]))
-        core_pops_this_T.append(np.mean(core_pop[-100:]))
-        core_divs_this_T.append(np.mean(core_div[-100:]))
+        pops_this_T.append(pop_temp[-1])
+        divs_this_T.append(div_temp[-1])
+        core_pops_this_T.append(core_pop[-1])
+        core_divs_this_T.append(core_div[-1])
         # except:
             #print("Couldn't get pop and div for ",date,sd,temp)
 #                     pop_temp,div_temp = get_pop_div(date,sd,temp)
@@ -228,22 +220,14 @@ if plot_multiple:
             for sd in seed:
                 n+=1
                 try:
-                # if 1 == 1:
                     gens_run,pop_temp,div_temp,core_pop,core_div = get_pop_div(date,sd,temp)
                     gens_this_T.append(gens_run[-1])
-                    if pop_temp[-1] == 0:
-                        pops_this_T.append(np.mean(pop_temp[-1:]))
-                        divs_this_T.append(np.mean(div_temp[-1:]))
-                        core_pops_this_T.append(np.mean(core_pop[-1:]))
-                        core_divs_this_T.append(np.mean(core_div[-1:]))
-                    else:
-                        pops_this_T.append(np.mean(pop_temp[-1:]))
-                        divs_this_T.append(np.mean(div_temp[-1:]))
-                        core_pops_this_T.append(np.mean(core_pop[-1:]))
-                        core_divs_this_T.append(np.mean(core_div[-1:]))
+                    pops_this_T.append(pop_temp[-1])
+                    divs_this_T.append(div_temp[-1])
+                    core_pops_this_T.append(core_pop[-1])
+                    core_divs_this_T.append(core_div[-1])
                 except:
-                    print("Couldn't get pop and div for ",date,sd,temp)
-                    print(div_locat)
+                    #print("Couldn't get pop and div for ",date,sd,temp)
 #                     pop_temp,div_temp = get_pop_div(date,sd,temp)
                     continue
                 # final popualation at this temperature
@@ -254,7 +238,6 @@ if plot_multiple:
                     # interact_temp = get_interaction(date,sd,temp,"div",div_locat)
                     print("interactions not determined, ",sd,temp,date)
         print(f"T={T}, shape of popsthisT: {np.shape(pops_this_T)}")
-        print("\nshape of pops_this_T: ",np.shape(pops_this_T))
         gens_by_T.append(np.array(gens_this_T))
         pops_by_T.append(np.array(pops_this_T))
         divs_by_T.append(np.array(divs_this_T))
@@ -262,120 +245,6 @@ if plot_multiple:
         core_divs_by_T.append(np.array(core_divs_this_T))
         interactions_by_T.append(np.array(interactions_this_T))
     
-    # Now find means and quantiles
-    fig, ax = plt.subplots(2,2)
-    # TEST RUN
-    # figure out which temperatures have no numbers
-    # nonzero_by_T = np.nonzero(np.sum(pops_by_T,axis=0))
-    #pops_by_T = np.reshape(pops_by_T,[17,100])
-    #print("shape of pops_by_T: ", np.shape(pops_by_T))
-    popmeans,divmeans,corepopmeans,coredivmeans,Jmeans = [],[],[],[],[]
-    popQ1,divQ1,corepopQ1,coredivQ1,JQ1 = [],[],[],[],[]
-    popQ3,divQ3,corepopQ3,coredivQ3,JQ3 = [],[],[],[],[]
-    TTT = np.r_[271:320:3]
-    for i in range(17):
-        pops_this_T = np.array(pops_by_T[i]).astype('float')
-        divs_this_T = np.array(divs_by_T[i]).astype('float')
-        core_pops_this_T = np.array(core_pops_by_T[i]).astype('float')
-        core_divs_this_T = np.array(core_divs_by_T[i]).astype('float')
-        Jtot_this_T = np.array(interactions_by_T[i]).astype('float')
-
-        #print(pops_this_T == 0)
-        pops_this_T[pops_this_T==0] = np.nan
-        divs_this_T[divs_this_T==0] = np.nan
-        core_pops_this_T[core_pops_this_T==0] = np.nan
-        core_divs_this_T[core_divs_this_T==0] = np.nan
-        Jtot_this_T[Jtot_this_T==0] = np.nan
-
-        popmeans.append(np.nanmean(pops_this_T))
-        popQ1.append(np.nanquantile(pops_this_T,.25))
-        popQ3.append(np.nanquantile(pops_this_T,.75))
-        
-        divmeans.append(np.nanmean(divs_this_T))
-        divQ1.append(np.nanquantile(divs_this_T,.25))
-        divQ3.append(np.nanquantile(divs_this_T,.75))
-
-        corepopmeans.append(np.nanmean(core_pops_this_T))
-        corepopQ1.append(np.nanquantile(core_pops_this_T,.25))
-        corepopQ3.append(np.nanquantile(core_pops_this_T,.75))
-
-        coredivmeans.append(np.nanmean(core_divs_this_T))
-        coredivQ1.append(np.nanquantile(core_divs_this_T,.25))
-        coredivQ3.append(np.nanquantile(core_divs_this_T,.75))
-
-        Jmeans.append(np.nanmean(Jtot_this_T))
-        JQ1.append(np.nanquantile(Jtot_this_T,.25))
-        JQ3.append(np.nanquantile(Jtot_this_T,.75))
-        
-    ax[0,0].plot(TTT,corepopmeans,label="mean")
-    ax[0,0].fill_between(TTT,corepopQ1,corepopQ3,alpha=0.2)
-    ax[0,0].plot(TTT,corepopQ1,":",label="Q1")
-    ax[0,0].plot(TTT,corepopQ3,":",label="Q3")
-    ax[0,0].set_ylim(0)
-    ax[0,0].set_xlim(TTT[0],TTT[-1])
-
-    ax[0,1].plot(TTT,popmeans,label="mean")
-    ax[0,1].fill_between(TTT,popQ1,popQ3,alpha=0.2)
-    ax[0,1].plot(TTT,popQ1,":",label="Q1")
-    ax[0,1].plot(TTT,popQ3,":",label="Q3")
-    ax[0,1].set_ylim(0)
-    ax[0,0].set_xlim(TTT[0],TTT[-1])
-
-    ax[1,0].plot(TTT,coredivmeans,label="mean")
-    ax[1,0].fill_between(TTT,coredivQ1,coredivQ3,alpha=0.2)
-    ax[1,0].plot(TTT,coredivQ1,":",label="Q1")
-    ax[1,0].plot(TTT,coredivQ3,":",label="Q3")
-    ax[1,0].set_ylim(0)
-    ax[0,0].set_xlim(TTT[0],TTT[-1])
-
-    ax[1,1].plot(TTT,divmeans,label="mean")
-    ax[1,1].fill_between(TTT,divQ1,divQ3,alpha=0.2)
-    ax[1,1].plot(TTT,divQ1,":",label="Q1")
-    ax[1,1].plot(TTT,divQ3,":",label="Q3")
-    ax[1,1].set_ylim(0)
-    ax[0,0].set_xlim(TTT[0],TTT[-1])
-
-    ax[1,1].legend()
-    ax[1,1].set_xlabel("Temperature,T (K)")
-    ax[1,0].set_xlabel("Temperature,T (K)")
-
-    ax[0,0].set_ylabel(r"Avg. abundance,$\bar{N}$")
-    ax[1,0].set_ylabel(r"Avg. diversity")
-
-    ax[0,0].set_title("Core")
-    ax[0,1].set_title("Ecosystem")
-    
-    
-    plt.legend()
-    plt.ylim(0)
-    #plt.xlabel("Temperature,T (K)")
-    #plt.ylabel(r"Avg. final abundance,$\bar{N}$")
-    plt.savefig(locat+experiment+date+extra_folder+"/final_quartiles_"+experiment[:-1]+date+".pdf")
-    
-    fig,ax = plt.subplots()
-    ax.plot(TTT,Jmeans,label="mean")
-    ax.fill_between(TTT,JQ1,JQ3,alpha=0.2)
-    ax.plot(TTT,JQ1,":",label="Q1")
-    ax.plot(TTT,JQ3,":",label="Q3")
-    ax.set_ylim(0)
-    
-    ax.set_ylabel("Core-core interactions")
-    ax.set_xlabel("Temperature,T (K)")
-    
-    plt.savefig(locat+experiment+date+extra_folder+"/final_interactions_"+experiment[:-1]+date+".pdf")
-    plt.show()
-
-    
-    #mean_pop_by_T = np.nanmean(pops_by_T,axis=1)
-    #quant1_pop_by_T = np.nanquantile(pops_by_T,.25,axis=1)
-    #quant2_pop_by_T = np.nanquantile(pops_by_T,.75,axis=1)
-    #ax.plot(temperatures,mean_pop_by_T,label="mean")
-    #ax.plot(temperatures,quant1_pop_by_T,":",label="Q1")
-    #ax.plot(temperatures,quant2_pop_by_T,":",label="Q3")
-    #plt.show()
-
-
-
     # boxplots
     if not plotting:
         print(pops_by_T, divs_by_T, interactions_by_T)
@@ -388,108 +257,44 @@ if plot_multiple:
             from geoTNM import temperature_effects as TM
 
         print(f"T: {T}, number of boxes: {len(pops_by_T)}, {np.shape(pops_by_T)}")
+        bwr = plt.get_cmap('bwr')
+        colors = np.linspace(0,1,len(T))
 
         positions = np.insert(T,0,T[0] - 5)
         xlabels = np.array(T,dtype=str)
         xlabels = np.insert(xlabels,0,'TNM')
         fig,ax = plt.subplots(3,2,sharex='all') #True)
-        part1 = ax[0,0].violinplot(pops_by_T[:],positions=positions,widths=4,showextrema=False,showmedians=True)
-        part2 = ax[1,0].violinplot(divs_by_T[:],positions=positions,widths=4,showextrema=False,showmedians=True)
-        # ax[1,0].tick_params(labelrotation=90)
-        
-        part3 = ax[0,1].violinplot(core_pops_by_T[:],positions=positions,widths=4,showextrema=False,showmedians=True)
-        part4 = ax[1,1].violinplot(core_divs_by_T[:],positions=positions,widths=4,showextrema=False,showmedians=True)
-        part5 = ax[2,0].violinplot(interactions_by_T[:],positions=positions,widths=4,showextrema=False,showmedians=True)
+        for t in range(len(T)):
+            ax[0,0].violinplot(pops_by_T[t],positions=positions[t],widths=4,showextrema=False,color=colors[t]) #,labels=xlabels)
+            ax[1,0].violinplot(divs_by_T[t],positions=positions[t],widths=4,showextrema=False,color=colors[t]) #,labels=xlabels)
+            ax[0,1].violinplot(core_pops_by_T[t],positions=positions[t],widths=4,showextrema=False,color=colors[t]) #,labels=xlabels)
+            ax[1,1].violinplot(core_divs_by_T[t],positions=positions[t],widths=4,showextrema=False,color=colors[t]) #,labels=xlabels)
+            ax[2,0].violinplot(interactions_by_T[t],positions=positions[t],widths=4,showextrema=False,color=colors[t]) #,labels=xlabels)
         ax[2,1].plot(T,TM.poff_total(0,T)-TM.pdeath(T),color='b')
-
-        # Set y limits
         if temp_script == "met_simple":
             ax[2,1].set_ylim(-.1,.5)
         else: ax[2,1].set_ylim(0)
-
-        # axis labels and orientation
-        ax[0,0].set_ylabel(f"Total pop'ln",color="b") #blue")
+        ax[2,1].set_ylabel("Poff(fi=0)-Pdeath")
+        ax[2,0].set_ylabel(f"Core interact'ns ",color="b")
+        ax[0,0].set_ylabel(f"Total pop'ln",color="blue")
+        ax[1,0].set_ylabel(f"Total div.",color="blue")
         ax[0,1].set_ylabel("Core pop'ln",color="b")
         ax[1,1].set_ylabel("Core div.",color="b")
-        ax[1,0].set_ylabel(f"Total div.",color="b")
-        # ax[1,1].tick_params(labelrotation=90)
-        ax[2,0].set_ylabel(f"Core interact'ns ",color="b")
-        # ax[2,0].set_xticklabels(xlabels)
-        # ax[1,0].set_xlabel("Temperature")
-        ax[2,1].set_ylabel("Poff(fi=0)-Pdeath",color='b')
+        ax[2,1].tick_params(labelrotation=90)
+        ax[2,0].tick_params(labelrotation=90)
         ax[0,0].tick_params(labelrotation=90)
         ax[0,1].tick_params(labelrotation=90)
         ax[1,0].tick_params(labelrotation=90)
         ax[1,1].tick_params(labelrotation=90)
-        ax[2,0].tick_params(labelrotation=90)
-        ax[2,1].tick_params(labelrotation=90)
-
-        # Color the violin faces according to temperature
-        bwr = plt.get_cmap('bwr')
-        colors = bwr(np.linspace(0,1,len(part1['bodies'])))
-        i = -1
-        for pc in part1['bodies']:
-                i += 1
-                if i == 0:
-                    pc.set_facecolor("m")
-                else:
-                    pc.set_facecolor(colors[i])
-                pc.set_edgecolor('black')
-                pc.set_alpha(.8)
-
-        i = -1
-        for pc in part2['bodies']:
-                i += 1
-                if i == 0:
-                    pc.set_facecolor("m")
-                else:
-                    pc.set_facecolor(colors[i])
-                pc.set_edgecolor('black')
-                pc.set_alpha(.8)
-
-        i = -1
-        for pc in part3['bodies']:
-                i += 1
-                if i == 0:
-                    pc.set_facecolor("m")
-                else:
-                    pc.set_facecolor(colors[i])
-                pc.set_edgecolor('black')
-                pc.set_alpha(.8)
-
-        i = -1
-        for pc in part4['bodies']:
-                i += 1
-                if i == 0:
-                    pc.set_facecolor("m")
-                else:
-                    pc.set_facecolor(colors[i])
-                pc.set_edgecolor('black')
-                pc.set_alpha(.8)
-
-        i = -1
-        for pc in part5['bodies']:
-                i += 1
-                if i == 0:
-                    pc.set_facecolor("m")
-                else:
-                    pc.set_facecolor(colors[i])
-                pc.set_edgecolor('black')
-                pc.set_alpha(.8)
-
         # ax[2,1].set_xticklabels(xlabels)
         # ax[1,1].set_xlabel("Temperature")
         plt.suptitle(f"Final ecosystem characteristics:\n{n} experiments at each T ({experiment[:-1]}, {date})") 
 
-        # set x axis label in center below subplots
-        fig.text(0.5, 0.015, 'Temperature (K)', color="red",ha='center', va='center')        
-        # label control case
-        #fig.text(0.13, 0.08, 'control',color='m',ha='center',va='center') #,rotation=90)
-        #fig.text(0.56, 0.08, 'control',color='m',ha='center',va='center') #,rotation=90)
-        fig.text(0.19, 0.82, 'control',color='m',ha='center',va='center',rotation=45)
-
+        # plt.xlabel("Temperature")
+        fig.text(0.5, 0.015, 'Temperature (K)', color="r",ha='center', va='center')        
+        
         #try:
-        plt.savefig(locat+experiment+date+extra_folder+"/violins_"+experiment[:-1]+date+".pdf")
+        plt.savefig(locat+experiment+date+extra_folder+"/colored_violins_"+experiment[:-1]+date+".pdf")
         #except:
             #print("figure couldn't be saved...")
         plt.show()

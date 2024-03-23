@@ -2,14 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import skewnorm
 Tref = 307.5
-scaling = 4.5
+scaling = 5.5*1.0134*3 # 4.5
 width = 10.5
-skew = -4
+skew = -3
 temps = np.r_[274:320:3]
 def TPC(T,Tref=Tref):
     return scaling*skewnorm.pdf(T,skew,loc=Tref,scale=width)
 def death(T):
-    dTr = 0.05
+    dTr = 1.6*0.05
     Ad = 6000
     TD = 1/294 - 1/T
     return 1 - np.exp(-dTr*np.exp(Ad*TD))

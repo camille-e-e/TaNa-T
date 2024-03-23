@@ -14,31 +14,66 @@ of extant ecosystems).
 """
 # Import modules
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from datetime import date
+from datetime import date,datetime,timedelta
 import time
 import string
 
 # Define which experiment to analyze
 # -----------------------------------
 folder = "SteadyT/" # "SpunupT" # "SteadyT/" # ends in /
-experiment = "Sep_24/" # "Aug_10/" # "Jun_20/" # "Jul_21/" # "Sep_09/" # "Jul_21/" # ends in /
-extra_folder = "poff_is_roff/" # "poff_is_roff/" # "Variable_Tresponse/" # "MTE_TPC_combo/" # "Variable_Tresponse/" #"poff_is_roff/" # ends in /
-other_dates = [experiment[:4] + i for i in list(np.array(np.r_[12:30],dtype=str))] # if filename dates don't match folder date, list other filename dates
+experiment = "Sep_29/" # "Feb_08/" # "Jan_09/" #,"Oct_11/"] #["Oct_11/","Nov_03/"] # "Aug_10/" # "Jun_20/" # "Jul_21/" # "Sep_09/" # "Jul_21/" # ends in /
+extra_folder = "MTE_TPC_combo/" # "MTE-env-scaledup/" #,"MTE-env/"] # ["single-TPC/","one-TRC/"] # "poff_is_roff/" # "Variable_Tresponse/" # "MTE_TPC_combo/" # "Variable_Tresponse/" #"poff_is_roff/" # ends in /
+num_tries = 40 #number of other dates to try for file name #other_dates = [experiment[:4] + i for i in list(np.array(np.r_[12:30],dtype=str))] # if filename dates don't match folder date, list other filename dates
+sample_size = 100 # or False
 base_path = "/home/cfebvre/camille/OUT_TNM/temp_TNM/experiments/"
-maxgens = 50_000 # lenght of experiment (in generations)
+maxgens = 10_000 # lenght of experiment (in generations)
 spinup = 1000 #
 multi_temp = True # one temperature or multiple
 show_plots = True # if False, this code can be run without X11 forwarding
 # ------------------------------------
 # End of user-defined inputs
+draw_MTE = False
 if folder == "SpunupT/":
     maxgens += spinup
 
+def MTE(T):
+    B0 = 0.19*1.9e10 #
+    Ea = 0.6 # eV
+    k = 8.6E-5 # ev/K Boltzmann's constant
+    B = B0 * np.exp(-Ea/k/T)
+    return B
+
+def pdeath(T):
+    Tr = 294
+    dTr = 0.05
+    Ad = 6000
+    TD = 1/Tr - 1/T
+    return dTr*np.exp(Ad*TD)
+
 # Set path to files
-locat = base_path+folder+experiment+extra_folder
-output_folder = locat
+if np.shape(experiment) == () and np.shape(extra_folder) == ():
+    locat = base_path+folder+experiment+extra_folder
+    output_folder = locat
+else:
+    locat1 = base_path+folder+experiment[0]+extra_folder[0]
+    output_folder = locat1
+    locat = [locat1]
+    for i in range(len(experiment)):
+        if np.shape(extra_folder) == ():
+            locat.append(base_path+folder+experiment[0]+extra_folder)
+        else: locat.append(base_path+folder+experiment[i]+extra_folder[i])
+
+# make ending for all pdf files
+if np.shape(experiment) == () and np.shape(extra_folder) == ():
+    fig_ending = f"{folder[:-1]}{experiment[:-1]}{extra_folder[:-1]}.pdf"
+else:
+    if np.shape(extra_folder) == ():
+        fig_ending = f"{folder[:-1]}{experiment[0][:-1]}{extra_folder[:-1]}.pdf"
+    else:
+        fig_ending = f"{folder[:-1]}{experiment[0][:-1]}{extra_folder[0][:-1]}.pdf"
 
 # figure out which computer we're on
 filepath = os.getcwd()
@@ -60,6 +95,7 @@ elif system == 'windows':
         figure_folder += '\\'
 else: Exception("plotting directory not found: ",figure_folder)
 
+
 if os.path.isdir(figure_folder) != True:
     os.mkdir(figure_folder)
     print("Making new folder")
@@ -68,11 +104,20 @@ print("Figure folder: ",figure_folder,"exists: ",os.path.exists(figure_folder))
 # Collect all output files to plot
 divfiles = []
 ecosystfiles = []
-for filename in os.listdir(locat):
-    if filename.endswith(".dat"):
-        if filename.startswith("div"):
-            divfiles.append(filename) 
-        elif filename.startswith("pypy"): ecosystfiles.append(filename)
+if np.shape(locat) == ():
+    for filename in os.listdir(locat):
+        if filename.endswith(".dat"):
+            if filename.startswith("div"):
+                divfiles.append(filename) 
+            elif filename.startswith("pypy"): ecosystfiles.append(filename)
+else: 
+    for location in locat:
+        for filename in os.listdir(location):
+            if filename.endswith(".dat"):
+                if filename.startswith("div"):
+                    divfiles.append(filename) 
+                elif filename.startswith("pypy"): ecosystfiles.append(filename)
+
 print(ecosystfiles)
 
 seeds = set()
@@ -85,7 +130,13 @@ order = []
 
 # loop through all files in ecosystfiles and figure out seeds and temperatures
 for file in ecosystfiles:
-    filename = locat + file
+    if np.shape(locat) == ():
+        filename = locat + file
+    else: 
+        for location in locat:
+            filename = location+file
+            if os.path.isfile(filename):
+                break
     if os.path.isfile(filename) != True:
         print("error, file doesn't exist. ",filename)
         continue
@@ -93,11 +144,17 @@ for file in ecosystfiles:
     loc1 = filename.index('seed')
     try: loc2 = filename[loc1:].index(experiment[:-1]) # find date in filename
     except: # if experiment took longer than a day to run, filename may not match folder date
-        for d in np.r_[0:len(other_dates)]:
-            try: 
-                loc2 = filename[loc1:].index(other_dates[d])
-                break
-            except: continue
+        marker = filename[loc1:].index('_')
+        date_now = filename[loc1+marker-3:loc1+marker+3]
+        loc2 = marker-3
+#        for d in np.r_[0:num_tries]: #len(other_dates)]:
+#            date1 = datetime.strptime(experiment[:-1],"%b_%d")
+#            adjusted_date = date1 + timedelta(days=int(d))
+#            date2 = adjusted_date.strftime("%b_%d")
+#            try: 
+#                loc2 = filename[loc1:].index(date2) #other_dates[d])
+#                break
+#            except: continue
     seed = filename[loc1+4:loc1+loc2] # loc1+4 begins after "seed", loc2 is end of seed
     seeds.add(seed)
     
@@ -109,6 +166,30 @@ for file in ecosystfiles:
         temperatures.add(int(float(temperature)))
         order.append([seed,str(int(float(temperature)))])
     else: order.append(seed)
+
+# if only a certain sample size is desired, toss any files after sample_size of that T is acheived
+if sample_size and multi_temp:
+    seeds_each_T = np.zeros(len(temperatures))
+    seeds_sampled_by_T = np.zeros(len(temperatures))
+    temp_list = np.sort(list(temperatures))
+    order2 = []
+    i = -1
+    for pair in order:
+        i += 1
+        seed,T = pair
+        T_idx = list(temp_list).index(float(T))
+        seeds_each_T[T_idx] += 1
+        if seeds_each_T[T_idx] <= sample_size:
+            order2.append(pair)
+            seeds_sampled_by_T[T_idx] += 1
+        else: 
+            ecosystfiles.pop(i)
+            i -= 1
+    print("Seeds each T: ")
+    print(seeds_each_T)
+    print(seeds_sampled_by_T)
+    print("----------------------------")
+    order = order2
 
 # Pre-allocate space
 # -----------------
@@ -177,7 +258,13 @@ for file in ecosystfiles:
     count +=1
     n += 1
     split_file = False
-    filename = locat + file
+    if np.shape(locat) == ():
+        filename = locat + file
+    else: 
+        for location in locat:
+            filename = location+file
+            if os.path.isfile(filename):
+                break
     seed,temperature = next(order)
     #print(seed,temperature)
     if [seed,temperature] in unique_dups:
@@ -320,10 +407,16 @@ for file in ecosystfiles:
 # Average output
 if multi_temp: 
     # get TPC curve from input
-    import geoTNM.temperature_effects as Teq
+    #import geoTNM.temperature_effects as Teq
+    if np.shape(locat) == ():
+        sys.path.append(locat)
+    else: sys.path.append(locat[0])
+    if not "MTE_TPC_combo.py" in os.listdir(sys.path[-1]):
+        print("Error: MTE_TPC_combo not in locat: ",locat)
+    import MTE_TPC_combo as Teq
     TPC = Teq.poff_T(temperatures) - Teq.pdeath(temperatures) 
     temp_smooth = np.linspace(temperatures[0],temperatures[-1],100)
-    TPC_smooth = Teq.poff_T(temp_smooth) - Teq.pdeath(temp_smooth) 
+    TPC_smooth = 3.3*Teq.poff_T(temp_smooth) - Teq.pdeath(temp_smooth) 
 
     # pre-allocate space for averages sorted by T
     popu_avg_by_T,div_avg_by_T,enc_avg_by_T,coresize_avg_by_T,corediv_avg_by_T,Jtot_avg_by_T = [],[],[],[],[],[]
@@ -368,7 +461,13 @@ if multi_temp:
         plt.xscale("log")
         plt.ylabel("Number of living ecosystems")
         plt.tight_layout()
-        plt.savefig(figure_folder+f"n_living_ecos_{folder[:-1]}{experiment[:-1]}.pdf")
+        #if np.shape(experiment) == () and np.shape(extra_folder) == ():
+        plt.savefig(figure_folder+f"n_living_ecos_"+fig_ending) #{folder[:-1]}{experiment[:-1]}{extra_folder[:-1]}.pdf")
+        #else:
+        #    if np.shape(extra_folder) == ():
+        #        plt.savefig(figure_folder+f"n_living_ecos_{folder[:-1]}{experiment[0][:-1]}{extra_folder[:-1]}.pdf")
+        #    else:
+        #        plt.savefig(figure_folder+f"n_living_ecos_{folder[:-1]}{experiment[0][:-1]}{extra_folder[0][:-1]}.pdf")
         #plt.show()
 
     # PLOT 2: timeseries of average population of living ecosystems
@@ -381,7 +480,7 @@ if multi_temp:
     plt.xscale("log")
     plt.legend(bbox_to_anchor=(1,1))
     plt.tight_layout()
-    plt.savefig(figure_folder+f"avg_living_popu_{folder[:-1]}{experiment[:-1]}.pdf")
+    plt.savefig(figure_folder+f"avg_living_popu_"+fig_ending) #{folder[:-1]}{experiment[:-1]}{extra_folder[:-1]}.pdf")
     #plt.show()
 
     # PLOT 3: timeseries of popu_avg INCLUDING extincitons
@@ -399,7 +498,7 @@ if multi_temp:
     plt.ylabel("Average population,<N> (indiv.)")
     plt.legend(bbox_to_anchor=(1,1))
     plt.tight_layout()
-    plt.savefig(figure_folder+f"avg_all_popu_{folder[:-1]}{experiment[:-1]}.pdf")
+    plt.savefig(figure_folder+f"avg_all_popu_"+fig_ending) #{folder[:-1]}{experiment[:-1]}{extra_folder[:-1]}.pdf")
 
     # PLOT 4: scatter plot of final number of surviving ecosystems
     fig,ax = plt.subplots() #1,2,sharey=True)
@@ -413,21 +512,38 @@ if multi_temp:
     #ax[0].legend(loc="upper left")
 
     #ax[1].set_title(f"Survival after {maxgens} gen.")
-    ax.plot(temperatures,living_at_t_by_T[-1,:],'*-')
-    ax.set_ylabel("Number of ecosystems alive",color="b")
-    ax2 = plt.twinx(ax)
-    ax2.plot(temp_smooth,TPC_smooth,"r")
+    ax.plot(temperatures,living_at_t_by_T[-1,:]/seeds_sampled_by_T,'*-',label="survival")
+    ax.fill_between(temperatures,np.zeros((len(temperatures),)),living_at_t_by_T[-1,:]/seeds_sampled_by_T,alpha=.2)
+    ax.text(0.1,0.7,f"{int(sum(living_at_t_by_T[-1,:]))/int(sum(seeds_sampled_by_T))*100:.1f}% survival overall",color="blue",transform=ax.transAxes,horizontalalignment="left",verticalalignment="center")
+    # ax.set_ylabel("Proportion of ecosystems alive",color="b")
+    ax.set_ylabel("Fraction") #,color="b")
+    ax2 = ax #plt.twinx(ax)
+    ax2.plot(temp_smooth,pdeath(temp_smooth),":",color='red',label=r"$p_{death}$")
+    if np.shape(extra_folder) == ():
+        if 'MTE' in extra_folder:
+            draw_MTE = True
+    elif 'MTE' in extra_folder[0]:
+        draw_MTE = True
+    if draw_MTE: #'MTE' in extra_folder:
+        ax2.plot(temp_smooth,MTE(temp_smooth),"--",color="black",label="MTE")
+    #    ax2.legend(loc="upper right")
+        ax.set_ylabel("Fraction",color="k")
+        #ax2.set_ylabel("MTE envelope")
+    elif 'var' not in extra_folder:
+        ax2.plot(temp_smooth,TPC_smooth,"r",label=r"$r_{max}$")
+        ax.set_ylabel("Fraction",color="k")
+    ax2.legend(loc="upper right")
     #ax2.set_ylabel(r"Input TPC,$r_{max}$")
-    ax2.set_ylabel(r"$r_{off} - r_{death}$ ($\frac{\Delta N}{gen.}$)",color="r")
+        #ax2.set_ylabel(r"$r_{max}$ ($\frac{\Delta N}{gen.}$)",color="r")
     print("Living at end (by T):")
     print(living_at_t_by_T[-1,:])
     print("Temperatures:")
     print(temperatures)
     ax.set_xlabel("Temperature,T (K)")
-    ax.set_ylim(0)
-    ax2.set_ylim(0)
+    ax.set_ylim(0,1)
+    ax2.set_ylim(0,1)
     plt.tight_layout()
-    plt.savefig(figure_folder+f"survival_by_T_{folder[:-1]}{experiment[:-1]}.pdf")
+    plt.savefig(figure_folder+f"survival_by_T_"+fig_ending) #{folder[:-1]}{experiment[:-1]}{extra_folder[:-1]}.pdf")
 
     # PLOT 5: timeseries of diversity of living ecosystems
     plt.figure()
@@ -439,7 +555,7 @@ if multi_temp:
     plt.ylabel("Average diversity (species)")
     plt.legend(bbox_to_anchor=(1,1))
     plt.tight_layout()
-    plt.savefig(figure_folder+f"avg_living_div_{folder[:-1]}{experiment[:-1]}.pdf")
+    plt.savefig(figure_folder+f"avg_living_div_"+fig_ending) #{folder[:-1]}{experiment[:-1]}{extra_folder[:-1]}.pdf")
 
     # PLOT 6: timeseries of corepop
     plt.figure()
@@ -451,7 +567,7 @@ if multi_temp:
     plt.ylabel("Average population of core (indiv.)")
     plt.legend(bbox_to_anchor=(1,1))
     plt.tight_layout()
-    plt.savefig(figure_folder+f"avg_living_coresize_{folder[:-1]}{experiment[:-1]}.pdf")
+    plt.savefig(figure_folder+f"avg_living_coresize_"+fig_ending) #{folder[:-1]}{experiment[:-1]}{extra_folder[:-1]}.pdf")
 
     # PLOT 7: timeseries of corediv
     plt.figure()
@@ -463,7 +579,7 @@ if multi_temp:
     plt.ylabel("Average diversity of core (species)")
     plt.legend(bbox_to_anchor=(1,1))
     plt.tight_layout()
-    plt.savefig(figure_folder+f"avg_living_corediv_{folder[:-1]}{experiment[:-1]}.pdf")
+    plt.savefig(figure_folder+f"avg_living_corediv_"+fig_ending) #{folder[:-1]}{experiment[:-1]}{extra_folder[:-1]}.pdf")
 
     # PLOT 8: timeseries of Jtot
     plt.figure()
@@ -475,7 +591,7 @@ if multi_temp:
     plt.ylabel("Average interactions of core (unitless)")
     plt.legend(bbox_to_anchor=(1,1))
     plt.tight_layout()
-    plt.savefig(figure_folder+f"avg_living_Jtot_{folder[:-1]}{experiment[:-1]}.pdf")
+    plt.savefig(figure_folder+f"avg_living_Jtot_"+fig_ending) #{folder[:-1]}{experiment[:-1]}{extra_folder[:-1]}.pdf")
 
 
     # PLOT 9: put all timeseries into one figure
@@ -542,7 +658,7 @@ if multi_temp:
     #    a.text(-0.1, 1.1, string.ascii_uppercase[n], transform=a.transAxes,size=15) #, weight='bold')
 
     #plt.tight_layout()
-    plt.savefig(figure_folder+f"TTNM_timeseries_popdiv_{folder[:-1]}_{experiment[:-1]}.pdf")
+    plt.savefig(figure_folder+f"TTNM_timeseries_popdiv_"+fig_ending) #{folder[:-1]}_{experiment[:-1]}{extra_folder[:-1]}.pdf")
 
     # PREPARE plot 10: get final states
     final_pop_byT, final_div_byT, final_corepop_byT, final_corediv_byT, final_Jtot_byT,final_survival_byT = [],[],[],[],[],[]
@@ -643,7 +759,7 @@ if multi_temp:
         a.text(-0.1, 1.1, string.ascii_uppercase[n], transform=a.transAxes,size=15) #, weight='bold')
 
     plt.tight_layout()
-    plt.savefig(figure_folder+f"TTNM_final_avg_{folder[:-1]}_{experiment[:-1]}.pdf")
+    plt.savefig(figure_folder+f"TTNM_final_avg_"+fig_ending) #{folder[:-1]}_{experiment[:-1]}{extra_folder[:-1]}.pdf")
 
 
     # PLOT 11: Interactions by T
@@ -655,7 +771,7 @@ if multi_temp:
     ax.set_xlabel("Temperature,T (K)")
     ax.set_title(f"Avg interactions after {maxgens} gen.")
 
-    plt.savefig(figure_folder+f"final_core_interactions_{folder[:-1]}_{experiment[:-1]}.pdf")
+    plt.savefig(figure_folder+f"final_core_interactions_"+fig_ending) #{folder[:-1]}_{experiment[:-1]}{extra_folder[:-1]}.pdf")
 
 if show_plots:
     plt.show()

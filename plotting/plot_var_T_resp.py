@@ -5,16 +5,17 @@ import geoTNM as g
 import os
 
 # filename = "/home/cfebvre/camille/OUT_TNM/temp_TNM/experiments/Test/VariableT/pypy_seed101Jul_04_298K_TNM_L20.dat"
-seed = 100 # first seed
-num_seeds = 1 # number of seeds in experiment
-day = 'Aug_05'
+seed = 2100 # first seed
+num_seeds = 100 # number of seeds in experiment
+day = 'Feb_06' #'Sep_09' 'Jul_21'
 T = 298 # if one only
 temperatures = np.r_[274:320:3] # if multiple temperatures
 plot_1seed_only = False
-maxgens = 100
+maxgens = 10000 # 100000
 experiment = "SteadyT"
-sub_folder = "MTE_TPC_combo/" # "Variable_Tresponse/" #"Test_variable_response/"
-other_dates = [day[:5] + i for i in list(np.array(np.r_[10:11],dtype=str))]
+sub_folder = "MTE-env/" #"MTE_TPC_combo/" # "Variable_Tresponse/" #"Test_variable_response/"
+Tref_column = 10
+other_dates = [day[:5] + i for i in list(np.array(np.r_[4:9],dtype=str))]
 base_path = "/home/cfebvre/camille/OUT_TNM/temp_TNM/experiments/" 
 # filename = "/home/cfebvre/camille/OUT_TNM/temp_TNM/experiments/Test/VariableT/pypy_seed107Jul_07_298K_TNM_L20.dat" # SteadyT/Jul_07/Test_variable_response/pypy_seed100Jul_07_298K_TNM_L20.dat"
 filename = base_path+experiment+'/'+day+'/'+sub_folder+f"pypy_seed{seed}{day}_{T}K_TNM_L20.dat"
@@ -91,9 +92,18 @@ def plot_timeseries(filename):
                     speciation.append(enc_time[-1] - enc_time[-2])
                 core_popu_time.append(int(parts[4]))
                 core_div_time.append(int(parts[5]))
-                Topt_time.append(float(parts[-3]))
-                F_time.append(float(parts[-2]))
-                Twidth_time.append(float(parts[-1][:-1])) # remove /n from end
+                if day == "Nov_03":
+                    Topt_time.append(float(parts[-1]))
+                    F_time.append(float(parts[-4]))
+                    #Twidth_time.append(float(parts[-1][:-1])) # remove /n from end
+                elif Tref_column:
+                    Topt_time.append(float(parts[Tref_column-1]))
+                    F_time.append(float(parts[-4]))
+                    
+                else:
+                    Topt_time.append(float(parts[-3]))
+                    F_time.append(float(parts[-2]))
+                    Twidth_time.append(float(parts[-1][:-1])) # remove /n from end
     except: return 0,0,0,0,0,0,0,0,0
     if not plot_1seed_only:
         return popu_time,div_time,enc_time,core_popu_time,core_div_time,speciation,Topt_time,F_time,Twidth_time
@@ -242,7 +252,7 @@ else:
     i = -1
     fig,ax = plt.subplots(2,figsize=(10,6),dpi=80)
     cmap = plt.get_cmap('magma')
-    colors = cmap(np.linspace(1,.1,len(temperatures)))
+    colors = cmap(np.linspace(.1,1,len(temperatures)))
     for T in temperatures:
         i += 1
         ax[0].plot(popu_avg_all[:,i],label=f"T={T}",color=colors[i])
